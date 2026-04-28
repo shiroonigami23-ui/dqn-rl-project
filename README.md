@@ -8,6 +8,16 @@
 
 A from-scratch Deep Q-Network implementation (environment, replay, network, and training loop) built with NumPy.
 
+## Visual Preview
+
+![CartPole GIF](https://upload.wikimedia.org/wikipedia/commons/4/41/Cart-pole_swing_up.gif)
+
+![Training Dashboard](./charts/01_training_dashboard.png)
+
+![Policy Map](./charts/05_policy_map.png)
+
+![Algorithm Flowchart](./charts/12_algorithm_flowchart.png)
+
 ## Tags
 `reinforcement-learning`, `deep-q-learning`, `cartpole`, `numpy`, `double-dqn`, `experience-replay`, `ml-project`
 
