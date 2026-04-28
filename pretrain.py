@@ -96,7 +96,7 @@ def generate_demos(n_episodes: int = 200, seed: int = 42) -> tuple:
 def pretrain_network(X: np.ndarray, Y: np.ndarray,
                      hidden_sizes: list = None,
                      lr: float = 5e-4,
-                     epochs: int = 50,
+                     epochs: int = 500,
                      batch_size: int = 64,
                      seed: int = 42) -> NeuralNetwork:
     hidden_sizes = hidden_sizes or [128, 128]
@@ -141,7 +141,7 @@ def pretrain_network(X: np.ndarray, Y: np.ndarray,
 def create_pretrained_checkpoint(
         output_path: str = "checkpoints/pretrained_model.pkl",
         n_demo_episodes: int = 200,
-        pretrain_epochs: int = 50,
+        pretrain_epochs: int = 500,
         seed: int = 42) -> str:
     """
     Full pipeline:
@@ -211,6 +211,6 @@ if __name__ == "__main__":
     create_pretrained_checkpoint(
         output_path    = "checkpoints/pretrained_model.pkl",
         n_demo_episodes = 200,
-        pretrain_epochs = 50,
+        pretrain_epochs = 500,
         seed           = 42
     )
