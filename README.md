@@ -43,3 +43,8 @@ See [docs/SHOWCASE.md](./docs/SHOWCASE.md) for animations, diagrams, and visual 
 ## Publish
 
 See [docs/PUBLISHING.md](./docs/PUBLISHING.md) for GitHub, Kaggle, and Hugging Face workflow commands.
+
+## Live Showcase Page
+
+Open `index.html` in this repository for a visual project presentation with animated sections, diagrams, tables, and chart gallery.  
+For web hosting, enable GitHub Pages in repo settings and use root (`/`) on `main` branch.
