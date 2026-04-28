@@ -5,8 +5,15 @@
 [![Environment](https://img.shields.io/badge/Environment-CartPole-orange)](.)
 [![Status](https://img.shields.io/badge/Notebook-Executable-brightgreen)](.)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
+[![HF Space](https://img.shields.io/badge/HuggingFace-Space-yellow)](https://huggingface.co/spaces/ShiroOnigami23/dqn-cartpole-live)
 
 A from-scratch Deep Q-Network implementation (environment, replay, network, and training loop) built with NumPy.
+
+## Live Demo
+
+- Hugging Face Space: https://huggingface.co/spaces/ShiroOnigami23/dqn-cartpole-live
+- Hugging Face Model: https://huggingface.co/ShiroOnigami23/dqn-cartpole-numpy
+- GitHub Pages Showcase: https://shiroonigami23-ui.github.io/dqn-rl-project/
 
 ## Visual Preview
 
