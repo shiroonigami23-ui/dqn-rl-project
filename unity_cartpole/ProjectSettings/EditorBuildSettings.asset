@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 11656571de9d99241b61f4ca12a00aab
+  - enabled: 1
+    path: Assets/Scenes/CartPole.unity
+    guid: 904f3c9557381cc43aadb9e28b575ee9
+  m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0
