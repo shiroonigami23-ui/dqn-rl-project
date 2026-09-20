@@ -1,6 +1,6 @@
 {
   "name": "DQN CartPole Showcase",
-  "description": "Deep Q-Network CartPole showcase with live physics simulation studio, neural inference engine, D3 loss & reward dynamics, 2D phase-space policy map, and checkpoint benchmarks.",
+  "description": "Interactive Deep Q-Network studio for CartPole-v1 featuring live physics simulation, multi-policy radar Pareto benchmarks, real-time FFT chattering analyzer, counterfactual what-if branching, synaptic weight tensor heatmaps, and SVD spectrum decomposition.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
