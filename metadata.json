@@ -1,6 +1,6 @@
 {
   "name": "DQN CartPole Showcase",
-  "description": "Deep Q-Network CartPole showcase with training charts, policy visualizer, and evaluation metrics.",
+  "description": "Deep Q-Network CartPole showcase with live physics simulation studio, neural inference engine, D3 loss & reward dynamics, 2D phase-space policy map, and checkpoint benchmarks.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
