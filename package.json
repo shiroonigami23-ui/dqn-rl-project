@@ -1,0 +1,16 @@
+{
+  "name": "dqn-cartpole-showcase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'Static build complete'",
+    "start": "node server.js",
+    "lint": "node --check server.js"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "express": "^4.21.2"
+  }
+}

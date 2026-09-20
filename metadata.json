@@ -1,0 +1,6 @@
+{
+  "name": "DQN CartPole Showcase",
+  "description": "Deep Q-Network CartPole showcase with training charts, policy visualizer, and evaluation metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

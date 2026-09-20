@@ -1,63 +1,193 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DQN CartPole Showcase</title>
+  <meta name="description" content="Deep Q-Network CartPole showcase with training charts, policy visualizer, and evaluation metrics." />
+  <meta property="og:title" content="DQN CartPole Showcase" />
+  <meta property="og:description" content="Deep Q-Network CartPole showcase with training charts, policy visualizer, and evaluation metrics." />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    if (!window.d3) {
+      document.write('<script src="/node_modules/d3/dist/d3.min.js"><\/script>');
+    }
+  </script>
   <style>
     :root {
       --bg: #0b1020;
       --panel: #121a30;
       --panel-2: #182445;
+      --card-bg: linear-gradient(180deg, var(--panel), var(--panel-2));
+      --card-border: rgba(255, 255, 255, 0.12);
+      --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
       --text: #e8eefc;
+      --text-heading: #f8fafc;
       --muted: #a8b3d1;
       --accent: #38bdf8;
       --accent-2: #22c55e;
       --warn: #f59e0b;
+      --danger: #ef4444;
       --radius: 18px;
+      --badge-bg: #0e1731;
+      --badge-border: #27406f;
+      --badge-text: #d8e4ff;
+      --link-bg: #1f2d55;
+      --link-border: #38508a;
+      --link-hover: #283b70;
+      --table-border: rgba(255, 255, 255, 0.15);
+      --table-row-border: rgba(255, 255, 255, 0.08);
+      --table-th-bg: rgba(56, 189, 248, 0.15);
+      --chart-bg: rgba(11, 16, 32, 0.6);
+      --chart-border: rgba(255, 255, 255, 0.08);
+      --chart-axis-text: #94a3b8;
+      --chart-axis-line: rgba(255, 255, 255, 0.14);
+      --chart-grid: rgba(255, 255, 255, 0.06);
+      --chip-bg: rgba(14, 23, 49, 0.7);
+      --chip-border: rgba(255, 255, 255, 0.08);
+      --toolbar-bg: rgba(18, 26, 48, 0.75);
+      --toolbar-border: rgba(255, 255, 255, 0.1);
+      --btn-group-bg: #0d152a;
+      --btn-group-border: #273960;
+      --tooltip-bg: rgba(11, 16, 32, 0.95);
+      --tooltip-text: #e2e8f0;
+      --tooltip-border: rgba(56, 189, 248, 0.45);
+      --modal-backdrop: rgba(5, 9, 20, 0.82);
+      --modal-bg: #111a32;
+      --modal-border: rgba(56, 189, 248, 0.3);
+      --body-grad: radial-gradient(1000px 500px at 10% -10%, #1d4ed8 0%, transparent 55%),
+                   radial-gradient(900px 450px at 110% 10%, #0f766e 0%, transparent 50%),
+                   #0b1020;
     }
+
+    [data-theme="light"] {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      --text: #0f172a;
+      --text-heading: #020617;
+      --muted: #475569;
+      --accent: #0284c7;
+      --accent-2: #16a34a;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --badge-bg: #e2e8f0;
+      --badge-border: #cbd5e1;
+      --badge-text: #0f172a;
+      --link-bg: #f1f5f9;
+      --link-border: #cbd5e1;
+      --link-hover: #e2e8f0;
+      --table-border: #cbd5e1;
+      --table-row-border: #e2e8f0;
+      --table-th-bg: rgba(2, 132, 199, 0.12);
+      --chart-bg: #ffffff;
+      --chart-border: #cbd5e1;
+      --chart-axis-text: #334155;
+      --chart-axis-line: #94a3b8;
+      --chart-grid: rgba(0, 0, 0, 0.08);
+      --chip-bg: #f8fafc;
+      --chip-border: #e2e8f0;
+      --toolbar-bg: #f8fafc;
+      --toolbar-border: #cbd5e1;
+      --btn-group-bg: #f1f5f9;
+      --btn-group-border: #cbd5e1;
+      --tooltip-bg: rgba(255, 255, 255, 0.98);
+      --tooltip-text: #0f172a;
+      --tooltip-border: #0284c7;
+      --modal-backdrop: rgba(15, 23, 42, 0.65);
+      --modal-bg: #ffffff;
+      --modal-border: #cbd5e1;
+      --body-grad: radial-gradient(1000px 500px at 10% -10%, #dbeafe 0%, transparent 60%),
+                   radial-gradient(900px 450px at 110% 10%, #dcfce7 0%, transparent 55%),
+                   #f4f6fa;
+    }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
       color: var(--text);
       font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
-      background:
-        radial-gradient(1000px 500px at 10% -10%, #1d4ed8 0%, transparent 55%),
-        radial-gradient(900px 450px at 110% 10%, #0f766e 0%, transparent 50%),
-        var(--bg);
+      background: var(--body-grad);
       line-height: 1.5;
+      transition: background 0.25s ease, color 0.2s ease;
     }
     .wrap { width: min(1120px, 92vw); margin: 28px auto 64px; }
     .hero {
       background: linear-gradient(145deg, rgba(56,189,248,.15), rgba(34,197,94,.12));
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid var(--card-border);
       border-radius: var(--radius);
       padding: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      box-shadow: var(--card-shadow);
       animation: rise .8s ease-out;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    h1 { margin: 0 0 10px; font-size: clamp(1.8rem, 3vw, 2.8rem); }
+    [data-theme="light"] .hero {
+      background: linear-gradient(145deg, rgba(2, 132, 199, 0.08), rgba(22, 163, 74, 0.06)), #ffffff;
+    }
+    .hero-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0 0 10px; font-size: clamp(1.8rem, 3vw, 2.8rem); color: var(--text-heading); }
     .sub { color: var(--muted); margin: 0 0 16px; }
     .badges { display: flex; flex-wrap: wrap; gap: 10px; }
     .badge {
-      background: #0e1731; border: 1px solid #27406f; border-radius: 999px;
-      padding: 6px 12px; font-size: .85rem; color: #d8e4ff;
+      background: var(--badge-bg); border: 1px solid var(--badge-border); border-radius: 999px;
+      padding: 6px 12px; font-size: .85rem; color: var(--badge-text);
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; }
     .links a {
-      color: #fff; text-decoration: none; background: #1f2d55;
-      border: 1px solid #38508a; padding: 8px 12px; border-radius: 10px;
-      transition: transform .2s ease, background .2s ease;
+      color: var(--text); text-decoration: none; background: var(--link-bg);
+      border: 1px solid var(--link-border); padding: 8px 12px; border-radius: 10px;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease;
+      font-weight: 500;
     }
-    .links a:hover { transform: translateY(-2px); background: #283b70; }
+    .links a:hover { transform: translateY(-2px); background: var(--link-hover); }
+
+    /* Theme Switcher Button */
+    .btn-theme {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--link-bg);
+      border: 1px solid var(--link-border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .btn-theme:hover {
+      background: var(--link-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    }
+    .btn-theme svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+    }
 
     .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 18px; }
     .card {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid rgba(255,255,255,.12);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 14px;
       padding: 14px;
       animation: rise .7s ease both;
+      box-shadow: var(--card-shadow);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .span-6 { grid-column: span 6; }
     .span-4 { grid-column: span 4; }
@@ -65,25 +195,661 @@
     .span-12 { grid-column: span 12; }
     @media (max-width: 900px) { .span-6,.span-4,.span-8 { grid-column: span 12; } }
 
-    .card h2, .card h3 { margin: 4px 0 10px; }
+    .card h2, .card h3 { margin: 4px 0 10px; color: var(--text-heading); }
     .muted { color: var(--muted); }
     img {
-      width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,.15);
+      width: 100%; border-radius: 10px; border: 1px solid var(--card-border);
       display: block;
     }
 
     .metrics {
       width: 100%; border-collapse: collapse; overflow: hidden;
-      border: 1px solid rgba(255,255,255,.15); border-radius: 12px;
+      border: 1px solid var(--table-border); border-radius: 12px;
     }
     .metrics th, .metrics td {
-      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 10px 12px; border-bottom: 1px solid var(--table-row-border);
       text-align: left;
     }
-    .metrics th { background: rgba(56,189,248,.15); }
+    .metrics th { background: var(--table-th-bg); color: var(--text-heading); font-weight: 600; }
 
     .gallery { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
     @media (max-width: 700px) { .gallery { grid-template-columns: 1fr; } }
+
+    /* Interactive D3 Chart Styles */
+    .loss-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .loss-section-title { margin: 0; font-size: 1.4rem; color: #f8fafc; }
+    .loss-section-desc { color: var(--muted); margin: 4px 0 0; font-size: 0.9rem; }
+    .header-badge-group { display: flex; gap: 8px; align-items: center; }
+    .live-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+      animation: pulse 2s infinite;
+      margin-right: 6px;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+      70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .chart-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 990px) {
+      .chart-stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .chart-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+    .stat-chip:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .stat-chip-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+    .stat-chip-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-chip-sub {
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--toolbar-bg);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .controls-left, .controls-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .control-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .control-label {
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .btn-group {
+      display: inline-flex;
+      background: var(--btn-group-bg);
+      border: 1px solid var(--btn-group-border);
+      border-radius: 8px;
+      padding: 2px;
+      overflow: hidden;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .btn-chart {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+    .btn-chart:hover {
+      color: var(--text-heading);
+      background: rgba(125, 125, 125, 0.12);
+    }
+    .btn-chart.active {
+      background: var(--accent);
+      color: #081023;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(56, 189, 248, 0.35);
+    }
+    [data-theme="light"] .btn-chart.active {
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+    }
+
+    .pill-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      font-size: 0.78rem;
+      color: var(--text);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .pill-toggle:hover {
+      border-color: var(--accent);
+    }
+    .pill-toggle input[type="checkbox"] {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1.5px solid var(--muted);
+      outline: none;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      transition: all 0.15s ease;
+    }
+    .pill-toggle input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .pill-toggle.pill-eps input[type="checkbox"]:checked {
+      background: var(--warn);
+      border-color: var(--warn);
+    }
+    .pill-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .btn-reset {
+      background: var(--link-bg);
+      border: 1px solid var(--link-border);
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+    .btn-reset:hover {
+      background: var(--link-hover);
+      border-color: var(--accent);
+    }
+    .btn-reset:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: var(--link-border);
+    }
+    .btn-reset.highlight {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      animation: pulse-border 1.5s infinite alternate;
+    }
+    @keyframes pulse-border {
+      from { box-shadow: 0 0 4px rgba(56,189,248,0.4); }
+      to { box-shadow: 0 0 10px rgba(56,189,248,0.8); }
+    }
+
+    /* Threshold Control & Line */
+    .input-threshold {
+      width: 68px;
+      background: var(--btn-group-bg);
+      border: 1px solid var(--btn-group-border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 4px 6px;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .input-threshold:focus {
+      border-color: var(--accent-2);
+    }
+    .thresh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-2);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      font-variant-numeric: tabular-nums;
+      transition: all 0.15s ease;
+    }
+    [data-theme="light"] .thresh-badge {
+      background: rgba(22, 163, 74, 0.12);
+      color: #15803d;
+      border-color: rgba(22, 163, 74, 0.3);
+    }
+
+    .chart-viewport {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      min-height: 380px;
+      margin-top: 10px;
+      border-radius: 12px;
+      background: var(--chart-bg);
+      border: 1px solid var(--chart-border);
+      overflow: hidden;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .axis text {
+      fill: var(--chart-axis-text);
+      font-size: 11px;
+      font-family: inherit;
+    }
+    .axis line, .axis path {
+      stroke: var(--chart-axis-line);
+    }
+    .grid-line line {
+      stroke: var(--chart-grid);
+      stroke-dasharray: 3 3;
+    }
+    .grid-line path {
+      display: none;
+    }
+    .axis-label {
+      fill: var(--chart-axis-text);
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    .brush .selection {
+      fill: var(--accent);
+      fill-opacity: 0.15;
+      stroke: var(--accent);
+      stroke-width: 1.5px;
+      stroke-dasharray: 4 3;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      background: var(--tooltip-bg);
+      border: 1px solid var(--tooltip-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--tooltip-text);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      transition: opacity 0.12s ease;
+      min-width: 190px;
+    }
+    .tooltip-header {
+      font-weight: 700;
+      color: var(--accent);
+      border-bottom: 1px solid var(--chart-border);
+      padding-bottom: 5px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 3px 0;
+    }
+    .tooltip-label { color: var(--muted); }
+    .tooltip-val { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-heading); }
+
+    .chart-footer-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-line {
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .legend-dashed {
+      border-top: 2px dashed var(--warn);
+      width: 18px;
+      height: 0;
+    }
+
+    .chart-loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--chart-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 10;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(56, 189, 248, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Draggable SVG Elements */
+    .threshold-handle-pill rect {
+      transition: stroke-width 0.15s ease, filter 0.15s ease;
+    }
+    .threshold-handle-pill:hover rect, .threshold-handle-pill.dragging rect {
+      stroke-width: 2.2px;
+      filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.7));
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: var(--modal-backdrop);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-card {
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      animation: modalRise 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalRise {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--text-heading);
+    }
+    .modal-subtitle {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1.6rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .modal-close-btn:hover {
+      color: var(--text-heading);
+      background: rgba(125, 125, 125, 0.15);
+    }
+    .modal-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .trend-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.28);
+    }
+    .trend-banner.trend-down {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.35);
+    }
+    .trend-banner.trend-up {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    .trend-banner.trend-stable {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .trend-icon-large {
+      font-size: 2rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .trend-status-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+    .trend-status-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .trend-delta-badge {
+      margin-left: auto;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .trend-banner.trend-down .trend-delta-badge {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent-2);
+    }
+    .trend-banner.trend-up .trend-delta-badge {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+    .trend-banner.trend-stable .trend-delta-badge {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+    }
+
+    .reg-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 580px) {
+      .reg-metrics-grid { grid-template-columns: 1fr; }
+    }
+    .reg-metric-box {
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .reg-metric-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .reg-metric-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      font-variant-numeric: tabular-nums;
+    }
+    .reg-metric-sub {
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    .reg-chart-wrap {
+      background: var(--chart-bg);
+      border: 1px solid var(--chart-border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .reg-chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .modal-sparkline {
+      width: 100%;
+      height: 140px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .reg-details-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      background: var(--chip-bg);
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--chip-border);
+    }
+    @media (max-width: 580px) {
+      .reg-details-row { grid-template-columns: 1fr; }
+    }
+    .reg-details-row span {
+      color: var(--text-heading);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--card-border);
+    }
 
     .foot { margin-top: 18px; color: var(--muted); font-size: .92rem; }
     @keyframes rise {
@@ -95,8 +861,18 @@
 <body>
   <main class="wrap">
     <section class="hero">
-      <h1>Deep Q-Network CartPole Showcase</h1>
-      <p class="sub">NumPy-only RL pipeline with training, evaluation, analysis, and publication artifacts.</p>
+      <div class="hero-top-row">
+        <div>
+          <h1>Deep Q-Network CartPole Showcase</h1>
+          <p class="sub">NumPy-only RL pipeline with training, evaluation, analysis, and publication artifacts.</p>
+        </div>
+        <button id="btn-theme-toggle" class="btn-theme" type="button" aria-label="Toggle theme">
+          <span id="theme-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+          </span>
+          <span id="theme-text">Light Mode</span>
+        </button>
+      </div>
       <div class="badges">
         <span class="badge">Double DQN</span>
         <span class="badge">Experience Replay</span>
@@ -146,6 +922,226 @@
         </div>
       </article>
 
+      <!-- Interactive D3 Training Loss Explorer Section -->
+      <article id="interactive-loss-card" class="card span-12" style="animation-delay:.22s">
+        <header class="loss-section-header" id="loss-chart-header">
+          <div>
+            <h2 class="loss-section-title" id="loss-title">Interactive Training Loss Dynamics (D3.js)</h2>
+            <p class="loss-section-desc" id="loss-desc">
+              Full step-by-step TD error optimization curve and exploration decay from <code>logs/training_stats.json</code>.
+            </p>
+          </div>
+          <div class="header-badge-group" id="loss-badges">
+            <span class="badge" id="badge-total-steps"><span class="live-pulse"></span> 3,439 Gradient Steps</span>
+            <span class="badge" id="badge-optimizer">Adam lr=1e-3</span>
+            <span class="badge" id="badge-warmup">Warmup: 63 steps</span>
+          </div>
+        </header>
+
+        <!-- Stats Chips Grid -->
+        <div class="chart-stats-grid" id="loss-stats-grid">
+          <div class="stat-chip" id="chip-steps">
+            <span class="stat-chip-label">Total Optimization Steps</span>
+            <span class="stat-chip-value" id="val-total-steps">3,439</span>
+            <span class="stat-chip-sub">120 Episodes</span>
+          </div>
+          <div class="stat-chip" id="chip-init-loss">
+            <span class="stat-chip-label">Initial Step Loss</span>
+            <span class="stat-chip-value" id="val-init-loss">1.464</span>
+            <span class="stat-chip-sub">Warmup transition</span>
+          </div>
+          <div class="stat-chip" id="chip-min-loss">
+            <span class="stat-chip-label">Minimum Observed Loss</span>
+            <span class="stat-chip-value" id="val-min-loss">0.023</span>
+            <span class="stat-chip-sub" id="sub-min-loss-step">Step 1,082</span>
+          </div>
+          <div class="stat-chip" id="chip-threshold">
+            <span class="stat-chip-label">Below Threshold (<span id="chip-thresh-val">1.000</span>)</span>
+            <span class="stat-chip-value" id="val-below-thresh">2,140</span>
+            <span class="stat-chip-sub" id="sub-below-thresh-pct">62.2% of steps</span>
+          </div>
+          <div class="stat-chip" id="chip-epsilon">
+            <span class="stat-chip-label">Exploration Rate (&epsilon;)</span>
+            <span class="stat-chip-value" id="val-epsilon">0.653</span>
+            <span class="stat-chip-sub">1.00 &rarr; 0.01 decay</span>
+          </div>
+        </div>
+
+        <!-- Controls Toolbar -->
+        <div class="controls-bar" id="loss-controls-bar">
+          <div class="controls-left">
+            <div class="control-item" id="ctrl-smoothing">
+              <span class="control-label">Moving Average:</span>
+              <div class="btn-group" id="group-smooth-presets">
+                <button type="button" class="btn-chart" id="btn-smooth-1" data-window="1">Raw</button>
+                <button type="button" class="btn-chart" id="btn-smooth-25" data-window="25">25</button>
+                <button type="button" class="btn-chart active" id="btn-smooth-50" data-window="50">50</button>
+                <button type="button" class="btn-chart" id="btn-smooth-100" data-window="100">100</button>
+              </div>
+              <input type="range" id="slider-smooth-window" class="slider-input" min="1" max="200" value="50" style="width: 80px;" title="Adjust smoothing window">
+              <span id="label-window-val" style="font-variant-numeric: tabular-nums; font-size: 0.8rem; color: var(--accent);">50 pts</span>
+            </div>
+
+            <div class="control-item" id="ctrl-scale">
+              <span class="control-label">Y-Scale:</span>
+              <div class="btn-group" id="group-scale-mode">
+                <button type="button" class="btn-chart active" id="btn-scale-linear">Linear</button>
+                <button type="button" class="btn-chart" id="btn-scale-log">Log10</button>
+              </div>
+            </div>
+
+            <div class="control-item" id="ctrl-threshold">
+              <span class="control-label">Threshold:</span>
+              <input type="number" id="input-threshold" class="input-threshold" min="0.01" max="25" step="0.05" value="1.00" title="User-defined loss threshold (drag horizontal line or edit value)" />
+              <span id="badge-below-thresh" class="thresh-badge" title="Steps below current threshold">62.2% below</span>
+            </div>
+          </div>
+
+          <div class="controls-right">
+            <label class="pill-toggle" id="label-toggle-raw" title="Toggle raw per-step loss values">
+              <input type="checkbox" id="toggle-raw" checked>
+              <span class="pill-dot" style="background: rgba(56, 189, 248, 0.45);"></span>
+              <span>Raw Loss</span>
+            </label>
+
+            <label class="pill-toggle" id="label-toggle-smooth" title="Toggle rolling moving average curve">
+              <input type="checkbox" id="toggle-smooth" checked>
+              <span class="pill-dot" style="background: var(--accent);"></span>
+              <span>Smoothed MA</span>
+            </label>
+
+            <label class="pill-toggle pill-eps" id="label-toggle-eps" title="Toggle exploration rate epsilon curve">
+              <input type="checkbox" id="toggle-eps" checked>
+              <span class="pill-dot" style="background: var(--warn);"></span>
+              <span>Epsilon (&epsilon;)</span>
+            </label>
+
+            <button type="button" class="btn-reset" id="btn-reset-zoom" disabled title="Click or double-click chart to reset zoom">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>Reset Zoom</span>
+            </button>
+
+            <button type="button" class="btn-reset" id="btn-open-analytics" title="Open Linear Regression & Trend Analytics for active zoom range">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analytics</span>
+            </button>
+
+            <button type="button" class="btn-reset" id="btn-export-csv" title="Export filtered subset of training loss as CSV file">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="label-export-csv">Export CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chart Viewport Area -->
+        <div class="chart-viewport" id="loss-chart-viewport">
+          <div class="chart-loading-overlay" id="loss-chart-loading">
+            <div class="spinner"></div>
+            <span>Loading training_stats.json...</span>
+          </div>
+          <svg id="loss-chart-svg" class="chart-svg"></svg>
+          <div id="loss-chart-tooltip" class="chart-tooltip"></div>
+        </div>
+
+        <!-- Chart Footer & Legend -->
+        <footer class="chart-footer-legend" id="loss-chart-footer">
+          <div class="legend-items">
+            <span class="legend-item"><span class="legend-line" style="background: var(--accent); height: 3px;"></span> <strong>Smoothed Loss</strong></span>
+            <span class="legend-item"><span class="legend-line" style="background: var(--accent-2); height: 3px;"></span> <strong>Loss &lt; Threshold</strong></span>
+            <span class="legend-item"><span class="legend-line" style="background: rgba(56, 189, 248, 0.35); height: 1.5px;"></span> <strong>Raw Step Loss</strong></span>
+            <span class="legend-item"><span class="legend-dashed" style="border-color: var(--accent-2); border-width: 2px;"></span> <strong>Threshold Line (Draggable)</strong></span>
+            <span class="legend-item"><span class="legend-dashed"></span> <strong>Exploration Rate (&epsilon;)</strong></span>
+          </div>
+          <div style="font-size: 0.78rem; color: var(--muted);" id="chart-hint-instruction">
+            <span>Tip: <strong>Drag green line ↕</strong> to adjust threshold &bull; <strong>Drag horizontally</strong> to zoom &bull; <strong>Double-click</strong> to reset zoom &bull; <strong>Analytics</strong> for linear regression</span>
+          </div>
+        </footer>
+      </article>
+
+      <!-- Analytics Linear Regression Modal -->
+      <div id="analytics-modal" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title">
+        <div class="modal-card" id="analytics-modal-card">
+          <header class="modal-header">
+            <div class="modal-title-wrap">
+              <div class="modal-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              </div>
+              <div>
+                <h3 class="modal-title" id="analytics-modal-title">Loss Dynamics &amp; Trend Analytics</h3>
+                <p class="modal-subtitle">Linear regression model on loss dynamics (Steps <span id="reg-range-text">1 - 3,439</span>)</p>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-close-modal" aria-label="Close modal">&times;</button>
+          </header>
+
+          <div class="modal-body">
+            <!-- Trend Status Banner -->
+            <div class="trend-banner trend-down" id="trend-banner">
+              <div class="trend-icon-large" id="trend-icon">&searrow;</div>
+              <div>
+                <div class="trend-status-title" id="trend-status-title">Downward Trend (Convergence)</div>
+                <div class="trend-status-desc" id="trend-status-desc">Loss is systematically contracting across the current step interval.</div>
+              </div>
+              <div class="trend-delta-badge" id="trend-delta-badge">-48.2% &Delta;</div>
+            </div>
+
+            <!-- Regression Metrics Grid -->
+            <div class="reg-metrics-grid">
+              <div class="reg-metric-box">
+                <span class="reg-metric-label">Regression Equation</span>
+                <span class="reg-metric-val" id="reg-equation">y = -0.00012x + 1.450</span>
+                <span class="reg-metric-sub">Loss(x) = Slope &bull; Step + Intercept</span>
+              </div>
+              <div class="reg-metric-box">
+                <span class="reg-metric-label">Slope (Rate of Change)</span>
+                <span class="reg-metric-val" id="reg-slope">-0.000122</span>
+                <span class="reg-metric-sub" id="reg-slope-100">-0.0122 per 100 steps</span>
+              </div>
+              <div class="reg-metric-box">
+                <span class="reg-metric-label">Goodness of Fit (R&sup2;)</span>
+                <span class="reg-metric-val" id="reg-r2">0.584</span>
+                <span class="reg-metric-sub" id="reg-correlation">Pearson r = -0.764</span>
+              </div>
+              <div class="reg-metric-box">
+                <span class="reg-metric-label">Steps Below Threshold (<span id="reg-thresh-val">1.000</span>)</span>
+                <span class="reg-metric-val" id="reg-below-thresh">2,140 / 3,439</span>
+                <span class="reg-metric-sub" id="reg-below-percent">62.2% of interval</span>
+              </div>
+            </div>
+
+            <!-- Fitted Regression Trendline Preview -->
+            <div class="reg-chart-wrap">
+              <div class="reg-chart-header">
+                <span><strong>Linear Regression Trendline vs Actual Loss</strong></span>
+                <div class="btn-group" id="group-reg-series">
+                  <button type="button" class="btn-chart active" id="btn-reg-smooth">Smoothed MA</button>
+                  <button type="button" class="btn-chart" id="btn-reg-raw">Raw Loss</button>
+                </div>
+              </div>
+              <div id="modal-sparkline-viewport" class="modal-sparkline">
+                <svg id="modal-sparkline-svg" width="100%" height="140"></svg>
+              </div>
+            </div>
+
+            <!-- Detailed Stats Row -->
+            <div class="reg-details-row">
+              <div>Start Predicted Loss: <span id="reg-start-val">1.464</span></div>
+              <div>End Predicted Loss: <span id="reg-end-val">0.758</span></div>
+              <div>Interval Mean &plusmn; Std: <span id="reg-mean-std">1.042 &plusmn; 0.28</span></div>
+              <div>Interval Min / Max: <span id="reg-min-max">0.023 / 15.04</span></div>
+            </div>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn-reset" id="btn-modal-export-csv">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export Interval CSV</span>
+            </button>
+            <button type="button" class="btn-chart active" id="btn-modal-close-action" style="padding: 6px 16px;">Done</button>
+          </footer>
+        </div>
+      </div>
+
       <article class="card span-12" style="animation-delay:.25s">
         <h3>Artifacts In Repository</h3>
         <p class="muted">This page is stored directly in the repo as <code>index.html</code>. Charts, notebooks, scripts, and model checkpoints are linked from the project tree for immediate viewer access.</p>
@@ -160,5 +1156,1231 @@
 
     <p class="foot">Tip: enable GitHub Pages in repository settings with source branch <code>main</code> and folder <code>/root</code> to publish this page live.</p>
   </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // State Management
+      let rawData = [];
+      let smoothedData = [];
+      let totalSteps = 0;
+      let currentWindow = 50;
+      let isLogScale = false;
+      let showRaw = true;
+      let showSmooth = true;
+      let showEps = true;
+      let currentXDomain = null;
+      let cumEpisodeSteps = [];
+      let episodeLengths = [];
+      let warmupSteps = 63;
+
+      // Threshold and Theme State
+      let lossThreshold = 1.00;
+      let currentTheme = localStorage.getItem('dqn_dashboard_theme') || 'dark';
+      let modalSeriesMode = 'smooth'; // 'smooth' or 'raw' for regression sparkline
+
+      // DOM Elements
+      const container = document.getElementById('loss-chart-viewport');
+      const svgEl = document.getElementById('loss-chart-svg');
+      const tooltip = document.getElementById('loss-chart-tooltip');
+      const loadingOverlay = document.getElementById('loss-chart-loading');
+
+      const valTotalSteps = document.getElementById('val-total-steps');
+      const valInitLoss = document.getElementById('val-init-loss');
+      const valMinLoss = document.getElementById('val-min-loss');
+      const subMinLossStep = document.getElementById('sub-min-loss-step');
+      const valBelowThresh = document.getElementById('val-below-thresh');
+      const subBelowThreshPct = document.getElementById('sub-below-thresh-pct');
+      const chipThreshVal = document.getElementById('chip-thresh-val');
+      const badgeBelowThresh = document.getElementById('badge-below-thresh');
+      const valEpsilon = document.getElementById('val-epsilon');
+
+      const sliderWindow = document.getElementById('slider-smooth-window');
+      const labelWindowVal = document.getElementById('label-window-val');
+      const presetButtons = document.querySelectorAll('#group-smooth-presets .btn-chart');
+      const btnScaleLinear = document.getElementById('btn-scale-linear');
+      const btnScaleLog = document.getElementById('btn-scale-log');
+      const inputThreshold = document.getElementById('input-threshold');
+      const toggleRaw = document.getElementById('toggle-raw');
+      const toggleSmooth = document.getElementById('toggle-smooth');
+      const toggleEps = document.getElementById('toggle-eps');
+      const btnResetZoom = document.getElementById('btn-reset-zoom');
+      const btnExportCsv = document.getElementById('btn-export-csv');
+      const labelExportCsv = document.getElementById('label-export-csv');
+      const btnThemeToggle = document.getElementById('btn-theme-toggle');
+      const themeIcon = document.getElementById('theme-icon');
+      const themeText = document.getElementById('theme-text');
+
+      // Modal DOM Elements
+      const analyticsModal = document.getElementById('analytics-modal');
+      const btnOpenAnalytics = document.getElementById('btn-open-analytics');
+      const btnCloseModal = document.getElementById('btn-close-modal');
+      const btnModalCloseAction = document.getElementById('btn-modal-close-action');
+      const btnModalExportCsv = document.getElementById('btn-modal-export-csv');
+      const btnRegSmooth = document.getElementById('btn-reg-smooth');
+      const btnRegRaw = document.getElementById('btn-reg-raw');
+
+      // Initialize Theme on startup
+      applyTheme(currentTheme, false);
+
+      function applyTheme(theme, reRender = true) {
+        currentTheme = theme;
+        localStorage.setItem('dqn_dashboard_theme', theme);
+        if (theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          if (themeText) themeText.textContent = 'Dark Mode';
+          if (themeIcon) {
+            themeIcon.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>`;
+          }
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (themeText) themeText.textContent = 'Light Mode';
+          if (themeIcon) {
+            themeIcon.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>
+              </svg>`;
+          }
+        }
+        if (reRender && rawData.length) {
+          renderChart();
+        }
+      }
+
+      // Fast rolling moving average calculation
+      function computeMovingAverage(losses, windowSize) {
+        const len = losses.length;
+        const result = new Float64Array(len);
+        if (windowSize <= 1) {
+          for (let i = 0; i < len; i++) result[i] = losses[i];
+          return result;
+        }
+        let sum = 0;
+        for (let i = 0; i < len; i++) {
+          sum += losses[i];
+          if (i >= windowSize) {
+            sum -= losses[i - windowSize];
+            result[i] = sum / windowSize;
+          } else {
+            result[i] = sum / (i + 1);
+          }
+        }
+        return result;
+      }
+
+      function getEpisodeForStep(stepIndex) {
+        const envStep = warmupSteps + stepIndex + 1;
+        for (let ep = 0; ep < cumEpisodeSteps.length; ep++) {
+          if (envStep <= cumEpisodeSteps[ep]) {
+            return ep + 1;
+          }
+        }
+        return cumEpisodeSteps.length;
+      }
+
+      // Fetch Training Stats
+      fetch('logs/training_stats.json')
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status} loading logs/training_stats.json`);
+          return res.json();
+        })
+        .then((stats) => {
+          if (!stats.losses || !stats.losses.length) {
+            throw new Error('No loss records found in logs/training_stats.json');
+          }
+
+          episodeLengths = stats.episode_lengths || [];
+          let cum = 0;
+          cumEpisodeSteps = [];
+          for (let i = 0; i < episodeLengths.length; i++) {
+            cum += episodeLengths[i];
+            cumEpisodeSteps.push(cum);
+          }
+          if (stats.total_steps && stats.losses.length) {
+            warmupSteps = Math.max(0, stats.total_steps - stats.losses.length);
+          }
+
+          const rawLosses = stats.losses;
+          const epsilons = stats.epsilons || [];
+          totalSteps = rawLosses.length;
+
+          let minLoss = Infinity;
+          let minLossStep = 1;
+          rawData = new Array(totalSteps);
+
+          for (let i = 0; i < totalSteps; i++) {
+            const lossVal = rawLosses[i];
+            const epsVal = i < epsilons.length ? epsilons[i] : 0.01;
+            if (lossVal < minLoss) {
+              minLoss = lossVal;
+              minLossStep = i + 1;
+            }
+            rawData[i] = {
+              step: i + 1,
+              envStep: warmupSteps + i + 1,
+              episode: getEpisodeForStep(i),
+              loss: lossVal,
+              epsilon: epsVal
+            };
+          }
+
+          currentXDomain = [1, totalSteps];
+
+          // Compute moving average
+          recalculateSmoothed();
+
+          // Populate statistics chips
+          if (valTotalSteps) valTotalSteps.textContent = totalSteps.toLocaleString();
+          if (valInitLoss) valInitLoss.textContent = rawLosses[0].toFixed(3);
+          if (valMinLoss) valMinLoss.textContent = minLoss.toFixed(3);
+          if (subMinLossStep) subMinLossStep.textContent = `Step ${minLossStep.toLocaleString()}`;
+          const finalEps = rawData[totalSteps - 1].epsilon;
+          if (valEpsilon) valEpsilon.textContent = finalEps.toFixed(3);
+
+          updateThresholdUI();
+
+          // Hide loading spinner
+          if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+          }
+
+          // Initial Render
+          renderChart();
+          initEventListeners();
+        })
+        .catch((err) => {
+          console.error('Error loading training stats for D3 chart:', err);
+          if (loadingOverlay) {
+            loadingOverlay.innerHTML = `
+              <div style="color:#ef4444;text-align:center;padding:20px;">
+                <p style="font-weight:600;margin-bottom:6px;">Failed to load training stats</p>
+                <p style="font-size:0.8rem;color:#94a3b8;">${err.message}</p>
+                <button type="button" class="btn-reset" onclick="location.reload()" style="margin-top:10px;">Retry</button>
+              </div>`;
+          }
+        });
+
+      function recalculateSmoothed() {
+        const rawLosses = rawData.map((d) => d.loss);
+        smoothedData = computeMovingAverage(rawLosses, currentWindow);
+      }
+
+      function updateThresholdUI() {
+        if (!rawData.length) return;
+        const xDomain = currentXDomain || [1, totalSteps];
+        const startStep = Math.max(1, Math.floor(xDomain[0]));
+        const endStep = Math.min(totalSteps, Math.ceil(xDomain[1]));
+        const intervalCount = endStep - startStep + 1;
+
+        let belowCount = 0;
+        for (let i = startStep - 1; i < endStep; i++) {
+          const l = smoothedData[i] !== undefined ? smoothedData[i] : rawData[i].loss;
+          if (l < lossThreshold) belowCount++;
+        }
+
+        const pct = intervalCount > 0 ? ((belowCount / intervalCount) * 100).toFixed(1) : '0.0';
+
+        if (inputThreshold) inputThreshold.value = lossThreshold.toFixed(3);
+        if (chipThreshVal) chipThreshVal.textContent = lossThreshold.toFixed(3);
+        if (valBelowThresh) valBelowThresh.textContent = belowCount.toLocaleString();
+        if (subBelowThreshPct) subBelowThreshPct.textContent = `${pct}% in zoom range`;
+        if (badgeBelowThresh) {
+          badgeBelowThresh.textContent = `${pct}% below`;
+          badgeBelowThresh.title = `${belowCount.toLocaleString()} of ${intervalCount.toLocaleString()} steps below ${lossThreshold.toFixed(3)}`;
+        }
+      }
+
+      // Linear Regression Calculation for Range
+      function computeLinearRegression(rangeStart, rangeEnd, useSmoothed = true) {
+        const start = Math.max(1, Math.floor(rangeStart));
+        const end = Math.min(totalSteps, Math.ceil(rangeEnd));
+        const n = end - start + 1;
+        if (n < 2) return null;
+
+        let sumX = 0;
+        let sumY = 0;
+        let sumXY = 0;
+        let sumXX = 0;
+        let sumYY = 0;
+        let minLoss = Infinity;
+        let maxLoss = -Infinity;
+        let belowThreshCount = 0;
+
+        const points = [];
+        for (let i = start - 1; i < end; i++) {
+          const x = rawData[i].step;
+          const y = useSmoothed ? smoothedData[i] : rawData[i].loss;
+          points.push({ x, y });
+
+          sumX += x;
+          sumY += y;
+          sumXY += x * y;
+          sumXX += x * x;
+          sumYY += y * y;
+
+          if (y < minLoss) minLoss = y;
+          if (y > maxLoss) maxLoss = y;
+          if (y < lossThreshold) belowThreshCount++;
+        }
+
+        const meanX = sumX / n;
+        const meanY = sumY / n;
+        const varianceX = sumXX - (sumX * sumX) / n;
+        const varianceY = sumYY - (sumY * sumY) / n;
+        const covarianceXY = sumXY - (sumX * sumY) / n;
+
+        const slope = varianceX !== 0 ? covarianceXY / varianceX : 0;
+        const intercept = meanY - slope * meanX;
+
+        // Pearson correlation r and R-squared
+        const rDenom = Math.sqrt(Math.max(1e-12, varianceX * varianceY));
+        const r = rDenom > 0 ? covarianceXY / rDenom : 0;
+        const r2 = Math.min(1.0, Math.max(0.0, r * r));
+
+        // Variance & standard deviation of Y
+        let varianceSum = 0;
+        for (let i = 0; i < points.length; i++) {
+          const diff = points[i].y - meanY;
+          varianceSum += diff * diff;
+        }
+        const stdY = Math.sqrt(varianceSum / n);
+
+        const startPred = slope * start + intercept;
+        const endPred = slope * end + intercept;
+        const deltaPct = startPred !== 0 ? ((endPred - startPred) / Math.abs(startPred)) * 100 : 0;
+
+        // Trend classification
+        let trendType = 'stable';
+        if (slope < -0.000015 || deltaPct < -2.0) {
+          trendType = 'down';
+        } else if (slope > 0.000015 || deltaPct > 2.0) {
+          trendType = 'up';
+        }
+
+        return {
+          start,
+          end,
+          n,
+          slope,
+          intercept,
+          r,
+          r2,
+          meanY,
+          stdY,
+          minLoss,
+          maxLoss,
+          startPred,
+          endPred,
+          deltaPct,
+          trendType,
+          belowThreshCount,
+          belowPct: ((belowThreshCount / n) * 100),
+          points
+        };
+      }
+
+      // Render Modal Regression Sparkline
+      function renderModalRegressionChart(reg) {
+        const svgModal = d3.select('#modal-sparkline-svg');
+        svgModal.selectAll('*').remove();
+        if (!reg || !reg.points.length) return;
+
+        const modalBox = document.getElementById('modal-sparkline-viewport');
+        const mWidth = modalBox.clientWidth || 600;
+        const mHeight = modalBox.clientHeight || 140;
+        const pad = { top: 12, right: 30, bottom: 22, left: 45 };
+        const w = mWidth - pad.left - pad.right;
+        const h = mHeight - pad.top - pad.bottom;
+
+        svgModal
+          .attr('width', mWidth)
+          .attr('height', mHeight)
+          .attr('viewBox', `0 0 ${mWidth} ${mHeight}`);
+
+        const g = svgModal.append('g')
+          .attr('transform', `translate(${pad.left},${pad.top})`);
+
+        const xSc = d3.scaleLinear()
+          .domain([reg.start, reg.end])
+          .range([0, w]);
+
+        const ySc = d3.scaleLinear()
+          .domain([Math.max(0, reg.minLoss * 0.9), Math.max(1.0, reg.maxLoss * 1.1)])
+          .range([h, 0])
+          .nice();
+
+        // Grid lines
+        g.append('g')
+          .attr('class', 'grid-line')
+          .call(d3.axisLeft(ySc).ticks(3).tickSize(-w).tickFormat(''));
+
+        // Threshold line on modal
+        if (lossThreshold >= ySc.domain()[0] && lossThreshold <= ySc.domain()[1]) {
+          g.append('line')
+            .attr('x1', 0).attr('x2', w)
+            .attr('y1', ySc(lossThreshold)).attr('y2', ySc(lossThreshold))
+            .attr('stroke', '#22c55e')
+            .attr('stroke-width', 1.2)
+            .attr('stroke-dasharray', '4 3')
+            .attr('opacity', 0.85);
+        }
+
+        // Actual loss line
+        const lineGen = d3.line()
+          .x((d) => xSc(d.x))
+          .y((d) => ySc(d.y));
+
+        g.append('path')
+          .datum(reg.points)
+          .attr('fill', 'none')
+          .attr('stroke', currentTheme === 'light' ? '#0284c7' : '#38bdf8')
+          .attr('stroke-width', 1.6)
+          .attr('d', lineGen);
+
+        // Linear Regression Trend Line
+        const regLineData = [
+          { x: reg.start, y: reg.startPred },
+          { x: reg.end, y: reg.endPred }
+        ];
+
+        let trendColor = '#38bdf8';
+        if (reg.trendType === 'down') trendColor = '#22c55e';
+        if (reg.trendType === 'up') trendColor = '#ef4444';
+
+        g.append('path')
+          .datum(regLineData)
+          .attr('fill', 'none')
+          .attr('stroke', trendColor)
+          .attr('stroke-width', 2.8)
+          .attr('stroke-dasharray', '6 4')
+          .attr('d', lineGen);
+
+        // Axes
+        g.append('g')
+          .attr('class', 'axis')
+          .attr('transform', `translate(0,${h})`)
+          .call(d3.axisBottom(xSc).ticks(5).tickFormat(d3.format(',d')));
+
+        g.append('g')
+          .attr('class', 'axis')
+          .call(d3.axisLeft(ySc).ticks(3).tickFormat(d3.format('.2f')));
+      }
+
+      // Populate Analytics Modal
+      function openAnalyticsModal() {
+        const xDomain = currentXDomain || [1, totalSteps];
+        const reg = computeLinearRegression(xDomain[0], xDomain[1], modalSeriesMode === 'smooth');
+        if (!reg) return;
+
+        // Header Range
+        const rangeText = document.getElementById('reg-range-text');
+        if (rangeText) rangeText.textContent = `${reg.start.toLocaleString()} - ${reg.end.toLocaleString()} (${reg.n.toLocaleString()} steps)`;
+
+        // Banner Status
+        const banner = document.getElementById('trend-banner');
+        const icon = document.getElementById('trend-icon');
+        const title = document.getElementById('trend-status-title');
+        const desc = document.getElementById('trend-status-desc');
+        const deltaBadge = document.getElementById('trend-delta-badge');
+
+        banner.className = `trend-banner trend-${reg.trendType}`;
+        const sign = reg.deltaPct > 0 ? '+' : '';
+        deltaBadge.textContent = `${sign}${reg.deltaPct.toFixed(1)}% \u0394`;
+
+        if (reg.trendType === 'down') {
+          icon.innerHTML = '&searrow;';
+          title.textContent = 'Downward Trend (Strong Convergence)';
+          desc.textContent = `Loss is decreasing at ${(Math.abs(reg.slope) * 100).toFixed(4)} per 100 steps. Agent is stabilizing.`;
+        } else if (reg.trendType === 'up') {
+          icon.innerHTML = '&nearrow;';
+          title.textContent = 'Upward Trend (Loss Divergence)';
+          desc.textContent = `Loss is increasing by ${(reg.slope * 100).toFixed(4)} per 100 steps in this interval.`;
+        } else {
+          icon.innerHTML = '&rarr;';
+          title.textContent = 'Stable Trend (Plateau / Equilibrium)';
+          desc.textContent = 'Loss is virtually flat across this interval with minimal slope variation.';
+        }
+
+        // Metrics Grid
+        const eqEl = document.getElementById('reg-equation');
+        if (eqEl) {
+          const bSign = reg.intercept >= 0 ? '+' : '-';
+          eqEl.textContent = `y = ${reg.slope.toFixed(6)}x ${bSign} ${Math.abs(reg.intercept).toFixed(3)}`;
+        }
+        const slopeEl = document.getElementById('reg-slope');
+        if (slopeEl) slopeEl.textContent = reg.slope.toFixed(6);
+        const slope100El = document.getElementById('reg-slope-100');
+        if (slope100El) {
+          const s100 = reg.slope * 100;
+          slope100El.textContent = `${s100 >= 0 ? '+' : ''}${s100.toFixed(4)} per 100 steps`;
+        }
+        const r2El = document.getElementById('reg-r2');
+        if (r2El) r2El.textContent = reg.r2.toFixed(3);
+        const corrEl = document.getElementById('reg-correlation');
+        if (corrEl) {
+          const strength = Math.abs(reg.r) > 0.6 ? 'Strong' : Math.abs(reg.r) > 0.3 ? 'Moderate' : 'Weak';
+          corrEl.textContent = `Pearson r = ${reg.r.toFixed(3)} (${strength})`;
+        }
+        const threshValEl = document.getElementById('reg-thresh-val');
+        if (threshValEl) threshValEl.textContent = lossThreshold.toFixed(3);
+        const belowCountEl = document.getElementById('reg-below-thresh');
+        if (belowCountEl) belowCountEl.textContent = `${reg.belowThreshCount.toLocaleString()} / ${reg.n.toLocaleString()}`;
+        const belowPctEl = document.getElementById('reg-below-percent');
+        if (belowPctEl) belowPctEl.textContent = `${reg.belowPct.toFixed(1)}% of steps below threshold`;
+
+        // Details Row
+        const startValEl = document.getElementById('reg-start-val');
+        if (startValEl) startValEl.textContent = reg.startPred.toFixed(4);
+        const endValEl = document.getElementById('reg-end-val');
+        if (endValEl) endValEl.textContent = reg.endPred.toFixed(4);
+        const meanStdEl = document.getElementById('reg-mean-std');
+        if (meanStdEl) meanStdEl.textContent = `${reg.meanY.toFixed(3)} \u00B1 ${reg.stdY.toFixed(3)}`;
+        const minMaxEl = document.getElementById('reg-min-max');
+        if (minMaxEl) minMaxEl.textContent = `${reg.minLoss.toFixed(3)} / ${reg.maxLoss.toFixed(3)}`;
+
+        // Render Sparkline
+        renderModalRegressionChart(reg);
+
+        analyticsModal.style.display = 'flex';
+      }
+
+      function closeAnalyticsModal() {
+        analyticsModal.style.display = 'none';
+      }
+
+      // Export Filtered Training Loss as CSV
+      function exportFilteredCSV() {
+        if (!rawData.length) return;
+        const xDomain = currentXDomain || [1, totalSteps];
+        const start = Math.max(1, Math.floor(xDomain[0]));
+        const end = Math.min(totalSteps, Math.ceil(xDomain[1]));
+
+        let csvContent = 'Step,Episode,Environment_Step,Raw_Loss,Smoothed_Loss,Epsilon,Below_Threshold_Flag\n';
+        for (let i = start - 1; i < end; i++) {
+          const d = rawData[i];
+          const sm = smoothedData[i] !== undefined ? smoothedData[i] : d.loss;
+          const isBelow = sm < lossThreshold ? 1 : 0;
+          csvContent += `${d.step},${d.episode},${d.envStep},${d.loss},${sm.toFixed(6)},${d.epsilon},${isBelow}\n`;
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.setAttribute('download', `dqn_cartpole_loss_steps_${start}_to_${end}.csv`);
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+
+        // Feedback animation on export button
+        if (labelExportCsv) {
+          const original = labelExportCsv.textContent;
+          labelExportCsv.textContent = 'Downloaded!';
+          setTimeout(() => {
+            labelExportCsv.textContent = original;
+          }, 1800);
+        }
+      }
+
+      // Main D3 Rendering Function
+      function renderChart() {
+        if (!rawData.length || !window.d3) return;
+
+        const width = container.clientWidth || 900;
+        const height = container.clientHeight || 420;
+        const margin = { top: 22, right: 62, bottom: 44, left: 58 };
+        const innerWidth = Math.max(100, width - margin.left - margin.right);
+        const innerHeight = Math.max(100, height - margin.top - margin.bottom);
+
+        const isLight = currentTheme === 'light';
+
+        const svg = d3.select(svgEl)
+          .attr('width', width)
+          .attr('height', height)
+          .attr('viewBox', `0 0 ${width} ${height}`);
+
+        svg.selectAll('*').remove();
+
+        const defs = svg.append('defs');
+
+        // Master Clip Path to prevent line spilling during zoom
+        defs.append('clipPath')
+          .attr('id', 'loss-clip')
+          .append('rect')
+          .attr('width', innerWidth)
+          .attr('height', innerHeight);
+
+        // Scales
+        const xDomain = currentXDomain || [1, totalSteps];
+        const xScale = d3.scaleLinear()
+          .domain(xDomain)
+          .range([0, innerWidth]);
+
+        const startStep = Math.max(1, Math.floor(xDomain[0]));
+        const endStep = Math.min(totalSteps, Math.ceil(xDomain[1]));
+        let visibleMaxLoss = 0.1;
+        let visibleMinLoss = Infinity;
+
+        for (let i = startStep - 1; i < endStep; i++) {
+          const l = rawData[i].loss;
+          if (l > visibleMaxLoss) visibleMaxLoss = l;
+          if (l > 0 && l < visibleMinLoss) visibleMinLoss = l;
+        }
+        if (visibleMinLoss === Infinity) visibleMinLoss = 0.01;
+
+        let yScale;
+        if (isLogScale) {
+          yScale = d3.scaleLog()
+            .domain([Math.max(0.005, visibleMinLoss * 0.8), Math.max(1.0, Math.max(lossThreshold * 1.1, visibleMaxLoss * 1.15))])
+            .range([innerHeight, 0])
+            .nice();
+        } else {
+          yScale = d3.scaleLinear()
+            .domain([0, Math.max(lossThreshold * 1.06, visibleMaxLoss * 1.08)])
+            .range([innerHeight, 0])
+            .nice();
+        }
+
+        const yEpsScale = d3.scaleLinear()
+          .domain([0, 1.0])
+          .range([innerHeight, 0]);
+
+        // Dynamic clip paths for user threshold highlighting:
+        // In SVG, y=0 is TOP (high loss), y=innerHeight is BOTTOM (low loss)
+        // Therefore, loss < lossThreshold corresponds to y between yScale(lossThreshold) and innerHeight!
+        const threshY = Math.max(0, Math.min(innerHeight, yScale(lossThreshold)));
+
+        defs.append('clipPath')
+          .attr('id', 'clip-below-threshold')
+          .append('rect')
+          .attr('x', 0)
+          .attr('y', threshY)
+          .attr('width', innerWidth)
+          .attr('height', Math.max(0, innerHeight - threshY));
+
+        defs.append('clipPath')
+          .attr('id', 'clip-above-threshold')
+          .append('rect')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('width', innerWidth)
+          .attr('height', threshY);
+
+        // Linear Gradients for Smoothed Area
+        const areaGradAbove = defs.append('linearGradient')
+          .attr('id', 'loss-area-grad-above')
+          .attr('x1', '0%').attr('y1', '0%')
+          .attr('x2', '0%').attr('y2', '100%');
+        areaGradAbove.append('stop').attr('offset', '0%').attr('stop-color', isLight ? '#0284c7' : '#38bdf8').attr('stop-opacity', isLight ? 0.22 : 0.28);
+        areaGradAbove.append('stop').attr('offset', '100%').attr('stop-color', isLight ? '#0284c7' : '#38bdf8').attr('stop-opacity', 0.0);
+
+        const areaGradBelow = defs.append('linearGradient')
+          .attr('id', 'loss-area-grad-below')
+          .attr('x1', '0%').attr('y1', '0%')
+          .attr('x2', '0%').attr('y2', '100%');
+        areaGradBelow.append('stop').attr('offset', '0%').attr('stop-color', '#22c55e').attr('stop-opacity', isLight ? 0.28 : 0.35);
+        areaGradBelow.append('stop').attr('offset', '100%').attr('stop-color', '#22c55e').attr('stop-opacity', 0.04);
+
+        const g = svg.append('g')
+          .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Grid lines with theme colors
+        const numXTicks = Math.max(4, Math.floor(innerWidth / 95));
+        const xGrid = d3.axisBottom(xScale)
+          .ticks(numXTicks)
+          .tickSize(-innerHeight)
+          .tickFormat('');
+
+        const yGrid = d3.axisLeft(yScale)
+          .ticks(6)
+          .tickSize(-innerWidth)
+          .tickFormat('');
+
+        g.append('g')
+          .attr('class', 'grid-line')
+          .attr('transform', `translate(0,${innerHeight})`)
+          .call(xGrid);
+
+        g.append('g')
+          .attr('class', 'grid-line')
+          .call(yGrid);
+
+        // Chart Data Area
+        const chartBody = g.append('g')
+          .attr('clip-path', 'url(#loss-clip)');
+
+        // Line Generators
+        const rawLine = d3.line()
+          .defined((d) => d.step >= xDomain[0] - 2 && d.step <= xDomain[1] + 2)
+          .x((d) => xScale(d.step))
+          .y((d) => yScale(Math.max(0.001, d.loss)));
+
+        const smoothLine = d3.line()
+          .defined((d, i) => d.step >= xDomain[0] - 2 && d.step <= xDomain[1] + 2)
+          .x((d) => xScale(d.step))
+          .y((d, i) => yScale(Math.max(0.001, smoothedData[i])));
+
+        const smoothArea = d3.area()
+          .defined((d, i) => d.step >= xDomain[0] - 2 && d.step <= xDomain[1] + 2)
+          .x((d) => xScale(d.step))
+          .y0(innerHeight)
+          .y1((d, i) => yScale(Math.max(0.001, smoothedData[i])));
+
+        const epsLine = d3.line()
+          .defined((d) => d.step >= xDomain[0] - 2 && d.step <= xDomain[1] + 2)
+          .x((d) => xScale(d.step))
+          .y((d) => yEpsScale(d.epsilon));
+
+        // 1. Draw Smoothed Area (Normal above, tinted green below threshold)
+        if (showSmooth) {
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-smooth-area-above')
+            .attr('fill', 'url(#loss-area-grad-above)')
+            .attr('d', smoothArea);
+
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-smooth-area-below')
+            .attr('clip-path', 'url(#clip-below-threshold)')
+            .attr('fill', 'url(#loss-area-grad-below)')
+            .attr('d', smoothArea);
+        }
+
+        // 2. Draw Raw Loss Line
+        if (showRaw) {
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-raw-loss')
+            .attr('fill', 'none')
+            .attr('stroke', isLight ? '#0284c7' : '#38bdf8')
+            .attr('stroke-width', 1.0)
+            .attr('stroke-opacity', isLight ? 0.35 : 0.28)
+            .attr('d', rawLine);
+
+          // Highlight raw line segments below threshold in distinct green
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-raw-loss-below')
+            .attr('clip-path', 'url(#clip-below-threshold)')
+            .attr('fill', 'none')
+            .attr('stroke', '#22c55e')
+            .attr('stroke-width', 1.2)
+            .attr('stroke-opacity', 0.4)
+            .attr('d', rawLine);
+        }
+
+        // 3. Draw Smoothed Loss Line with Distinct Threshold Color Highlight
+        if (showSmooth) {
+          // Normal segment (default theme blue)
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-smooth-loss')
+            .attr('fill', 'none')
+            .attr('stroke', isLight ? '#0284c7' : '#38bdf8')
+            .attr('stroke-width', 2.4)
+            .attr('stroke-linecap', 'round')
+            .attr('stroke-linejoin', 'round')
+            .attr('d', smoothLine);
+
+          // Segments where loss falls BELOW threshold: highlighted in vibrant green (#22c55e)
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-smooth-loss-below')
+            .attr('clip-path', 'url(#clip-below-threshold)')
+            .attr('fill', 'none')
+            .attr('stroke', '#22c55e')
+            .attr('stroke-width', 3.0)
+            .attr('stroke-linecap', 'round')
+            .attr('stroke-linejoin', 'round')
+            .attr('d', smoothLine);
+        }
+
+        // 4. Draw Epsilon Line (dashed)
+        if (showEps) {
+          chartBody.append('path')
+            .datum(rawData)
+            .attr('id', 'path-epsilon')
+            .attr('fill', 'none')
+            .attr('stroke', isLight ? '#d97706' : '#f59e0b')
+            .attr('stroke-width', 1.8)
+            .attr('stroke-dasharray', '5 4')
+            .attr('stroke-opacity', 0.85)
+            .attr('d', epsLine);
+        }
+
+        // 5. Axes Rendering
+        const xAxis = d3.axisBottom(xScale)
+          .ticks(numXTicks)
+          .tickFormat(d3.format(',d'));
+
+        const yAxis = d3.axisLeft(yScale)
+          .ticks(6, isLogScale ? '.2f' : undefined);
+
+        const yAxisEps = d3.axisRight(yEpsScale)
+          .ticks(5)
+          .tickFormat((d) => Math.round(d * 100) + '%');
+
+        g.append('g')
+          .attr('class', 'axis x-axis')
+          .attr('transform', `translate(0,${innerHeight})`)
+          .call(xAxis);
+
+        g.append('g')
+          .attr('class', 'axis y-axis')
+          .call(yAxis);
+
+        if (showEps) {
+          g.append('g')
+            .attr('class', 'axis y-axis-eps')
+            .attr('transform', `translate(${innerWidth},0)`)
+            .call(yAxisEps)
+            .selectAll('text')
+            .attr('fill', isLight ? '#b45309' : '#f59e0b');
+        }
+
+        // Axis Titles
+        g.append('text')
+          .attr('class', 'axis-label')
+          .attr('text-anchor', 'middle')
+          .attr('x', innerWidth / 2)
+          .attr('y', innerHeight + 38)
+          .text('Optimization Step (Gradient Updates)');
+
+        g.append('text')
+          .attr('class', 'axis-label')
+          .attr('text-anchor', 'middle')
+          .attr('transform', 'rotate(-90)')
+          .attr('x', -innerHeight / 2)
+          .attr('y', -44)
+          .text(isLogScale ? 'Loss (Huber/TD, Log10)' : 'Loss (Huber/TD Error)');
+
+        if (showEps) {
+          g.append('text')
+            .attr('class', 'axis-label')
+            .attr('text-anchor', 'middle')
+            .attr('transform', 'rotate(90)')
+            .attr('x', innerHeight / 2)
+            .attr('y', -innerWidth - 48)
+            .attr('fill', isLight ? '#b45309' : '#f59e0b')
+            .text('Exploration Rate (\u03B5)');
+        }
+
+        // 6. Interactive Brush for Zooming
+        const brush = d3.brushX()
+          .extent([[0, 0], [innerWidth, innerHeight]])
+          .on('end', (event) => {
+            const selection = event.selection;
+            if (!selection) return;
+
+            const [x0, x1] = selection.map(xScale.invert);
+            if (Math.abs(x1 - x0) > 5) {
+              currentXDomain = [Math.max(1, x0), Math.min(totalSteps, x1)];
+              btnResetZoom.disabled = false;
+              btnResetZoom.classList.add('highlight');
+              updateThresholdUI();
+              renderChart();
+            } else {
+              g.select('.brush').call(brush.move, null);
+            }
+          });
+
+        const brushG = g.append('g')
+          .attr('class', 'brush')
+          .call(brush);
+
+        brushG.on('dblclick', () => {
+          resetZoom();
+        });
+
+        // 7. Draggable Horizontal Threshold Line & Handle
+        const thresholdGroup = g.append('g')
+          .attr('class', 'threshold-group')
+          .attr('id', 'threshold-draggable-group');
+
+        // Visual Dashed Line
+        const threshLine = thresholdGroup.append('line')
+          .attr('id', 'line-threshold')
+          .attr('x1', 0)
+          .attr('x2', innerWidth)
+          .attr('y1', threshY)
+          .attr('y2', threshY)
+          .attr('stroke', '#22c55e')
+          .attr('stroke-width', 2.2)
+          .attr('stroke-dasharray', '6 4')
+          .style('pointer-events', 'none');
+
+        // Draggable Handle Pill on the right edge
+        const handlePill = thresholdGroup.append('g')
+          .attr('class', 'threshold-handle-pill')
+          .attr('transform', `translate(${innerWidth - 72}, ${threshY - 11})`)
+          .style('cursor', 'ns-resize');
+
+        handlePill.append('rect')
+          .attr('width', 76)
+          .attr('height', 22)
+          .attr('rx', 6)
+          .attr('fill', isLight ? '#ffffff' : '#0e1a34')
+          .attr('stroke', '#22c55e')
+          .attr('stroke-width', 1.8)
+          .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))');
+
+        const handleText = handlePill.append('text')
+          .attr('x', 38)
+          .attr('y', 15)
+          .attr('text-anchor', 'middle')
+          .attr('fill', isLight ? '#15803d' : '#4ade80')
+          .attr('font-size', '10.5px')
+          .attr('font-weight', '700')
+          .attr('font-variant-numeric', 'tabular-nums')
+          .text(`\u2195 ${lossThreshold.toFixed(2)}`);
+
+        // Wide invisible hit line for easy dragging across the entire chart width
+        const threshHitZone = thresholdGroup.append('line')
+          .attr('x1', 0)
+          .attr('x2', innerWidth)
+          .attr('y1', threshY)
+          .attr('y2', threshY)
+          .attr('stroke', 'transparent')
+          .attr('stroke-width', 22)
+          .style('cursor', 'ns-resize');
+
+        // Threshold Drag Behavior
+        const dragBehavior = d3.drag()
+          .on('start', function () {
+            handlePill.classed('dragging', true);
+          })
+          .on('drag', function (event) {
+            const clampedY = Math.max(0, Math.min(innerHeight, event.y));
+            const newLoss = yScale.invert(clampedY);
+            if (newLoss > 0) {
+              lossThreshold = Math.max(0.005, Math.min(30, newLoss));
+
+              // Update lines immediately
+              threshLine.attr('y1', clampedY).attr('y2', clampedY);
+              threshHitZone.attr('y1', clampedY).attr('y2', clampedY);
+              handlePill.attr('transform', `translate(${innerWidth - 72}, ${clampedY - 11})`);
+              handleText.text(`\u2195 ${lossThreshold.toFixed(2)}`);
+
+              // Update clipping rects dynamically
+              defs.select('#clip-below-threshold rect')
+                .attr('y', clampedY)
+                .attr('height', Math.max(0, innerHeight - clampedY));
+              defs.select('#clip-above-threshold rect')
+                .attr('height', clampedY);
+
+              updateThresholdUI();
+            }
+          })
+          .on('end', function () {
+            handlePill.classed('dragging', false);
+            updateThresholdUI();
+            renderChart();
+          });
+
+        threshHitZone.call(dragBehavior);
+        handlePill.call(dragBehavior);
+
+        // 8. Hover Crosshair & Tooltip Overlay
+        const focusG = g.append('g')
+          .attr('class', 'focus')
+          .attr('clip-path', 'url(#loss-clip)')
+          .style('display', 'none')
+          .style('pointer-events', 'none');
+
+        const focusLine = focusG.append('line')
+          .attr('stroke', isLight ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)')
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', '3 3')
+          .attr('y1', 0)
+          .attr('y2', innerHeight);
+
+        const focusDotSmooth = focusG.append('circle')
+          .attr('r', 5)
+          .attr('fill', isLight ? '#0284c7' : '#38bdf8')
+          .attr('stroke', isLight ? '#ffffff' : '#081023')
+          .attr('stroke-width', 2);
+
+        const focusDotRaw = focusG.append('circle')
+          .attr('r', 3.5)
+          .attr('fill', isLight ? '#38bdf8' : '#7dd3fc')
+          .attr('stroke', isLight ? '#ffffff' : '#081023')
+          .attr('stroke-width', 1.5);
+
+        const focusDotEps = focusG.append('circle')
+          .attr('r', 4)
+          .attr('fill', isLight ? '#d97706' : '#f59e0b')
+          .attr('stroke', isLight ? '#ffffff' : '#081023')
+          .attr('stroke-width', 1.5);
+
+        const bisectStep = d3.bisector((d) => d.step).left;
+
+        // Pointer event listener on the brush overlay
+        brushG.select('.overlay')
+          .on('pointerenter', () => {
+            focusG.style('display', null);
+            tooltip.style.opacity = '1';
+          })
+          .on('pointermove', function (event) {
+            const [pointerX, pointerY] = d3.pointer(event, this);
+            const hoveredStep = xScale.invert(pointerX);
+            const index = Math.min(totalSteps - 1, Math.max(0, bisectStep(rawData, hoveredStep)));
+            const d = rawData[index];
+            if (!d) return;
+
+            const cx = xScale(d.step);
+            const cySmooth = yScale(smoothedData[index]);
+            const cyRaw = yScale(d.loss);
+            const cyEps = yEpsScale(d.epsilon);
+
+            focusLine.attr('x1', cx).attr('x2', cx);
+
+            const isCurrentBelow = smoothedData[index] < lossThreshold;
+            focusDotSmooth
+              .attr('fill', isCurrentBelow ? '#22c55e' : (isLight ? '#0284c7' : '#38bdf8'));
+
+            if (showSmooth) {
+              focusDotSmooth.style('display', null).attr('cx', cx).attr('cy', cySmooth);
+            } else {
+              focusDotSmooth.style('display', 'none');
+            }
+
+            if (showRaw) {
+              focusDotRaw.style('display', null).attr('cx', cx).attr('cy', cyRaw);
+            } else {
+              focusDotRaw.style('display', 'none');
+            }
+
+            if (showEps) {
+              focusDotEps.style('display', null).attr('cx', cx).attr('cy', cyEps);
+            } else {
+              focusDotEps.style('display', 'none');
+            }
+
+            // Populate Tooltip
+            tooltip.innerHTML = `
+              <div class="tooltip-header">
+                <span>Step #${d.step.toLocaleString()}</span>
+                <span style="color:#22c55e;">Ep ${d.episode}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Raw Loss:</span>
+                <span class="tooltip-val" style="color:${isLight ? '#0284c7' : '#7dd3fc'};">${d.loss.toFixed(4)}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">MA (${currentWindow}):</span>
+                <span class="tooltip-val" style="color:${isCurrentBelow ? '#22c55e' : (isLight ? '#0284c7' : '#38bdf8')};">
+                  ${smoothedData[index].toFixed(4)} ${isCurrentBelow ? '<small style="color:#22c55e;">(&lt; Thresh)</small>' : ''}
+                </span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Exploration (\u03B5):</span>
+                <span class="tooltip-val" style="color:${isLight ? '#d97706' : '#f59e0b'};">${(d.epsilon * 100).toFixed(1)}%</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Threshold:</span>
+                <span class="tooltip-val" style="color:#22c55e;">${lossThreshold.toFixed(3)}</span>
+              </div>
+            `;
+
+            // Position tooltip dynamically
+            const tooltipWidth = tooltip.offsetWidth || 195;
+            const tooltipHeight = tooltip.offsetHeight || 140;
+            const mouseScreenX = cx + margin.left;
+            const mouseScreenY = Math.min(cySmooth, cyRaw) + margin.top;
+
+            let tipX = mouseScreenX + 16;
+            if (tipX + tooltipWidth > width - 10) {
+              tipX = mouseScreenX - tooltipWidth - 16;
+            }
+
+            let tipY = mouseScreenY - tooltipHeight / 2;
+            if (tipY < 10) tipY = 10;
+            if (tipY + tooltipHeight > height - 10) tipY = height - tooltipHeight - 10;
+
+            tooltip.style.left = `${tipX}px`;
+            tooltip.style.top = `${tipY}px`;
+          })
+          .on('pointerleave', () => {
+            focusG.style('display', 'none');
+            tooltip.style.opacity = '0';
+          });
+      }
+
+      function resetZoom() {
+        currentXDomain = [1, totalSteps];
+        btnResetZoom.disabled = true;
+        btnResetZoom.classList.remove('highlight');
+        updateThresholdUI();
+        renderChart();
+      }
+
+      function updateWindow(newVal) {
+        currentWindow = Math.max(1, Math.min(200, parseInt(newVal, 10) || 1));
+        if (sliderWindow) sliderWindow.value = currentWindow;
+        if (labelWindowVal) {
+          labelWindowVal.textContent = currentWindow === 1 ? 'Raw (1)' : `${currentWindow} pts`;
+        }
+
+        presetButtons.forEach((btn) => {
+          const w = parseInt(btn.dataset.window, 10);
+          btn.classList.toggle('active', w === currentWindow);
+        });
+
+        recalculateSmoothed();
+        updateThresholdUI();
+        renderChart();
+      }
+
+      function initEventListeners() {
+        // Theme Toggle Button
+        btnThemeToggle.addEventListener('click', () => {
+          const next = currentTheme === 'dark' ? 'light' : 'dark';
+          applyTheme(next, true);
+        });
+
+        // Threshold Input Change
+        if (inputThreshold) {
+          inputThreshold.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val > 0) {
+              lossThreshold = Math.max(0.005, Math.min(30, val));
+              updateThresholdUI();
+              renderChart();
+            }
+          });
+        }
+
+        // CSV Export Button
+        btnExportCsv.addEventListener('click', () => {
+          exportFilteredCSV();
+        });
+
+        // Analytics Modal Triggers
+        btnOpenAnalytics.addEventListener('click', () => {
+          openAnalyticsModal();
+        });
+
+        btnCloseModal.addEventListener('click', () => {
+          closeAnalyticsModal();
+        });
+
+        btnModalCloseAction.addEventListener('click', () => {
+          closeAnalyticsModal();
+        });
+
+        btnModalExportCsv.addEventListener('click', () => {
+          exportFilteredCSV();
+        });
+
+        // Backdrop click to close
+        analyticsModal.addEventListener('click', (e) => {
+          if (e.target === analyticsModal) {
+            closeAnalyticsModal();
+          }
+        });
+
+        // Escape key to close
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && analyticsModal.style.display !== 'none') {
+            closeAnalyticsModal();
+          }
+        });
+
+        // Toggle regression series between smoothed and raw
+        if (btnRegSmooth && btnRegRaw) {
+          btnRegSmooth.addEventListener('click', () => {
+            modalSeriesMode = 'smooth';
+            btnRegSmooth.classList.add('active');
+            btnRegRaw.classList.remove('active');
+            openAnalyticsModal();
+          });
+
+          btnRegRaw.addEventListener('click', () => {
+            modalSeriesMode = 'raw';
+            btnRegRaw.classList.add('active');
+            btnRegSmooth.classList.remove('active');
+            openAnalyticsModal();
+          });
+        }
+
+        // Preset window buttons
+        presetButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            updateWindow(btn.dataset.window);
+          });
+        });
+
+        // Window slider
+        sliderWindow.addEventListener('input', (e) => {
+          updateWindow(e.target.value);
+        });
+
+        // Scale mode buttons
+        btnScaleLinear.addEventListener('click', () => {
+          if (isLogScale) {
+            isLogScale = false;
+            btnScaleLinear.classList.add('active');
+            btnScaleLog.classList.remove('active');
+            renderChart();
+          }
+        });
+
+        btnScaleLog.addEventListener('click', () => {
+          if (!isLogScale) {
+            isLogScale = true;
+            btnScaleLog.classList.add('active');
+            btnScaleLinear.classList.remove('active');
+            renderChart();
+          }
+        });
+
+        // Visibility Toggles
+        toggleRaw.addEventListener('change', (e) => {
+          showRaw = e.target.checked;
+          renderChart();
+        });
+
+        toggleSmooth.addEventListener('change', (e) => {
+          showSmooth = e.target.checked;
+          renderChart();
+        });
+
+        toggleEps.addEventListener('change', (e) => {
+          showEps = e.target.checked;
+          renderChart();
+        });
+
+        // Reset Zoom Button
+        btnResetZoom.addEventListener('click', () => {
+          resetZoom();
+        });
+
+        // ResizeObserver for fluid responsiveness
+        let resizeTimeout;
+        if (window.ResizeObserver) {
+          const ro = new ResizeObserver(() => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+              renderChart();
+            }, 100);
+          });
+          ro.observe(container);
+        } else {
+          window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+              renderChart();
+            }, 100);
+          });
+        }
+      }
+    })();
+  </script>
 </body>
 </html>
