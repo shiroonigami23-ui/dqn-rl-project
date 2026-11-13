@@ -2,8 +2,6 @@
 
 <img src="assets/cartpole.gif" alt="DQN CartPole — NumPy From Scratch" width="60%">
 
-<sub>CartPole task the agent learns to balance. Environment animation: <a href='https://github.com/Farama-Foundation/Gymnasium'>Farama Gymnasium</a> (MIT)</sub>
-
 # 🎯 DQN CartPole — NumPy From Scratch
 
 ### A Double-DQN agent built from first principles in pure NumPy — no PyTorch, no TensorFlow
