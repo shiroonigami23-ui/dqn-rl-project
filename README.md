@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="DQN CartPole — NumPy From Scratch banner" width="100%">
+<img src="assets/banner.gif" alt="DQN CartPole — NumPy From Scratch animated banner" width="100%">
 
 # 🎯 DQN CartPole — NumPy From Scratch
 
@@ -20,12 +20,7 @@
 
 ## 📸 Preview
 
-<p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Cart-pole_swing_up.gif" alt="preview" width="45%">
-  <img src="./charts/01_training_dashboard.png" alt="preview" width="45%">
-  <img src="./charts/05_policy_map.png" alt="preview" width="45%">
-  <img src="./charts/12_algorithm_flowchart.png" alt="preview" width="45%">
-</p>
+<p align="center"><img src="assets/showcase.gif" alt="DQN CartPole — NumPy From Scratch showcase" width="85%"></p>
 
 ## 📖 Overview
 
@@ -209,13 +204,13 @@ See [CHANGELOG.md](CHANGELOG.md) for the release history.
 
 ## 📄 License
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+Distributed under the **MIT** license. See [LICENSE](LICENSE) for details.
 
 ## 👤 Author
 
 **Aryan Singh Chandel** (Shiro)
 
-[![GitHub](https://img.shields.io/badge/GitHub-shiroonigami23-ui-181717?style=flat-square&logo=github)](https://github.com/shiroonigami23-ui)
+[![GitHub](https://img.shields.io/badge/GitHub-shiroonigami23--ui-181717?style=flat-square&logo=github)](https://github.com/shiroonigami23-ui)
 
 <div align="center">
 
