@@ -1,0 +1,16 @@
+{
+  "name": "DQN CartPole \u2014 NumPy From Scratch",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install numpy matplotlib jupyter && npm install",
+  "forwardPorts": [
+    3000
+  ]
+}
